@@ -61,6 +61,10 @@ namespace FireEmblemCombatSimGBA.UnitClasses
             {
                 return 2;
             }
+            if (w.DragonSlayer && Defender.IsDragon)
+            {
+                return 2;
+            }
             return 1;
         }
         static int CritCoefficient(Unit Attacker, Unit Defender)
@@ -74,36 +78,49 @@ namespace FireEmblemCombatSimGBA.UnitClasses
             }
             return 1;
         }
-        public static int Damage(Unit Attacker, Unit Defender, Terrain DefTerrain)
+
+        public static void DealDamage(Combat thisBattle)
         {
+            Unit Attacker = thisBattle.DirectionOfCombat ? thisBattle.Initiator : thisBattle.Target;
+            Unit Defender = !thisBattle.DirectionOfCombat ? thisBattle.Initiator : thisBattle.Target;
+            Terrain DefTerrain = !thisBattle.DirectionOfCombat ? thisBattle.InitTerrain : thisBattle.TargetTerrain;
             Weapon w1 = Attacker.EquippedWeapon;
             Weapon w2 = Defender.EquippedWeapon;
+
             int attack = (Attacker.Strength / RuneswordRule(w1)) +
                 ((w1.Might + WeaponTriangleBonus(w1, w2)) * EffectiveCoefficient(w1, Defender));
             int defense = (w1.IsMagic ? Defender.Resistance : Defender.Defense) + DefTerrain.DefenseBonus;
             int crit = CritCoefficient(Attacker, Defender);
 
-            return (attack - defense) * crit;
+            Defender.HP -= (attack - defense) * crit;
         }
-        public static bool DoubleAttack(Unit Attacker, Unit Defender)
+        public static bool DoubleAttack(int AttackerSpeed, int DefenderSpeed)
         {
-            if (Attacker.CombatSpeed - Defender.CombatSpeed >= 4)
+            if (AttackerSpeed - DefenderSpeed >= 4)
             {
                 return true;
             }
             return false;
         }
-        public static int Accuracy(Unit Attacker, Unit Defender, Terrain DefTerrain)
+        public static int Accuracy(Combat thisBattle)
         {
+            Unit Attacker = thisBattle.DirectionOfCombat ? thisBattle.Initiator : thisBattle.Target;
+            Unit Defender = !thisBattle.DirectionOfCombat ? thisBattle.Initiator : thisBattle.Target;
+            Terrain DefTerrain = !thisBattle.DirectionOfCombat ? thisBattle.InitTerrain : thisBattle.TargetTerrain;
+
             int accuracy = Attacker.Hit + (WeaponTriangleBonus(Attacker.EquippedWeapon, Defender.EquippedWeapon) * 15);
             int avoid = Defender.Avoid + DefTerrain.AvoidBonus;
 
             return accuracy - avoid;
         }
-        public static int Accuracy(Unit StaffUser, Unit Target, int Distance)
+        public static int StaffAccuracy(Combat thisBattle)
         {
+            Unit StaffUser = thisBattle.Initiator;
+            Unit Target = thisBattle.Target;
+            int Distance = thisBattle.Distance;
+
             int accuracy = 30 + (StaffUser.Strength * 5) + StaffUser.Skill;
-            int avoid = (StaffUser.Resistance * 5) + (Distance * 2);
+            int avoid = (Target.Resistance * 5) + (Distance * 2);
 
             return accuracy - avoid;
         }

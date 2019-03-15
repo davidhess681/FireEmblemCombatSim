@@ -35,6 +35,7 @@ namespace FireEmblemCombatSimGBA
                 return Constitution - 1;
             }
         }
+        public WStaffEffect Status { get; set; }
         public Weapon EquippedWeapon { get; set; }
 
         public UMoveType MoveType { get; set; }

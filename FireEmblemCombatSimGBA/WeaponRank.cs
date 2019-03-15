@@ -8,7 +8,7 @@ namespace FireEmblemCombatSimGBA
 {
     public enum WRank { N, E, D, C, B, A, S }
 
-    class WeaponRank
+    struct WeaponRank
     {
         public int EXP { get; set; }
         public WRank Rank

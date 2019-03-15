@@ -17,13 +17,15 @@ namespace FireEmblemCombatSimGBA.UnitClasses
         public override int AvoidBonus => 0;
         public override int DefenseBonus => 0;
     }
-    class Sand : Plain
+    class Sand : Terrain
     {
         public override int AvoidBonus => 5;
+        public override int DefenseBonus => 0;
     }
-    class Building : Plain
+    class Building : Terrain
     {
         public override int AvoidBonus => 10;
+        public override int DefenseBonus => 0;
     }
     class Forest : Terrain
     {

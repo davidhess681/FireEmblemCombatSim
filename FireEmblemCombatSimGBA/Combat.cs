@@ -14,65 +14,81 @@ namespace FireEmblemCombatSimGBA
         public Unit Target { get; set; }
         public Terrain TargetTerrain { get; set; }
         public int Distance { get; set; }
+        public bool DirectionOfCombat { get; set; }     // indicates whether the initiator is the one dealing or taking damage
 
-        void InitiatorAttacks()
+        bool Roll(int accuracy)
+        {
+            Random rng = new Random();
+            if ((rng.Next(0, 100) + rng.Next(0, 100)) / 2 < accuracy)
+            {
+                return true;
+            }
+            return false;
+        }
+        void DealDamage()
         {
             Random rng = new Random();
             
-            if ((rng.Next(0, 100) + rng.Next(0, 100)) / 2 < FEMath.Accuracy(Initiator, Target, Distance))
+            if (Roll(FEMath.Accuracy(this)))
             {
-                Target.HP -= FEMath.Damage(Initiator, Target, TargetTerrain);
-            }
-
-            if (Initiator.EquippedWeapon.SpecialEffect == WSpecialEffect.Brave)
-            {
-                if ((rng.Next(0, 100) + rng.Next(0, 100)) / 2 < FEMath.Accuracy(Initiator, Target, Distance))
-                {
-                    Target.HP -= FEMath.Damage(Initiator, Target, TargetTerrain);
-                }
+                FEMath.DealDamage(this);
             }
         }
-        void TargetAttacks()
+        bool[] Rounds()
         {
-            // enemy counterattacks if within range
+            // determines who is attacking and how long combat runs
+
+            List<bool> result = new List<bool>();
+
+            // initiator's attack
+            result.Add(true);
+            if (Initiator.EquippedWeapon.SpecialEffect == WSpecialEffect.Brave) { result.Add(true); }
+
+            // determine counterattack
             if (Target.EquippedWeapon.MaxRange >= Distance && Target.EquippedWeapon.MinRange <= Distance)
             {
-                Random rng = new Random();
+                result.Add(false);
+                if (Target.EquippedWeapon.SpecialEffect == WSpecialEffect.Brave) { result.Add(false); }
+            }
 
-                if ((rng.Next(0, 100) + rng.Next(0, 100)) / 2 < FEMath.Accuracy(Target, Initiator, Distance))
+            // determine follow-up attack
+            if (FEMath.DoubleAttack(Initiator.CombatSpeed, Target.CombatSpeed))
+            {
+                result.Add(true);
+                if (Initiator.EquippedWeapon.SpecialEffect == WSpecialEffect.Brave) { result.Add(true); }
+            }
+            else if (FEMath.DoubleAttack(Target.CombatSpeed, Initiator.CombatSpeed))
+            {
+                if (Target.EquippedWeapon.MaxRange >= Distance && Target.EquippedWeapon.MinRange <= Distance)
                 {
-                    Initiator.HP -= FEMath.Damage(Target, Initiator, InitTerrain);
-                }
-
-                if (Target.EquippedWeapon.SpecialEffect == WSpecialEffect.Brave)
-                {
-                    if ((rng.Next(0, 100) + rng.Next(0, 100)) / 2 < FEMath.Accuracy(Target, Initiator, Distance))
-                    {
-                        Initiator.HP -= FEMath.Damage(Target, Initiator, InitTerrain);
-                    }
+                    result.Add(false);
+                    if (Target.EquippedWeapon.SpecialEffect == WSpecialEffect.Brave) { result.Add(false); }
                 }
             }
+
+            return result.ToArray();
         }
+
         public void Battle()
         {
-            InitiatorAttacks();
-            
-            if (Target.HP > 0)
+            var rounds = Rounds();
+            for (int i = 0; i < rounds.Length; i++)
             {
-                TargetAttacks();
-                
-                // if player can double
-                if (Initiator.HP > 0 && FEMath.DoubleAttack(Initiator, Target))
-                {
-                    InitiatorAttacks();
-                }
-                // if enemy can double
-                else if (Initiator.HP > 0 && FEMath.DoubleAttack(Target, Initiator))
-                {
-                    TargetAttacks();
-                }
-            }
+                DirectionOfCombat = rounds[i];
+                DealDamage();
 
+                if (Initiator.HP <= 0 || Target.HP <= 0) { break; }
+            }
         }
+        public void UseStaff(Staff staff)
+        {
+            Random rng = new Random();
+
+            if (Roll(FEMath.StaffAccuracy(this)))
+            {
+                Target.Status = staff.Effect;
+            }
+        }
+
     }
 }

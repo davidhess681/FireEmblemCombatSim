@@ -8,7 +8,8 @@ namespace FireEmblemCombatSimGBA
 {
     public enum WType { Unarmed, Sword, Lance, Axe, Bow, Anima, Light, Dark, Dragonstone }
     public enum WSpecialEffect { None, Reaver, MagSword, Poison, Brave }
-    class Weapon
+    public enum WStaffEffect { None, Silence, Sleep, Berserk }
+    struct Weapon
     {
         public WRank MinimumRank { get; set; }
         public WType Type { get; set; }
@@ -20,6 +21,7 @@ namespace FireEmblemCombatSimGBA
         public int Might { get; set; }
         public int Hit { get; set; }
         public int Crit { get; set; }
+        public bool DragonSlayer { get; set; }
         public bool IsMagic
         {
             get
@@ -28,12 +30,19 @@ namespace FireEmblemCombatSimGBA
                 {
                     return true;
                 }
-                if (IsIndirect)
+                if (SpecialEffect == WSpecialEffect.MagSword)
                 {
                     return true;
                 }
                 return false;
             }
         }
+    }
+
+    struct Staff
+    {
+        public WRank MinimumRank { get; set; }
+        public WStaffEffect Effect { get; set; }
+        public bool TargetsAlly { get; set; }
     }
 }
